@@ -113,6 +113,11 @@ func filterByPattern(entity string, include, exclude []regex.Regex) error {
 // wakatime project file can be detected in the filepath directory tree.
 // Returns an error to signal to the caller to skip the heartbeat.
 func filterFileEntity(heartbeat heartbeat.Heartbeat, config Config) error {
+	// skip filters for remote files downloaded to a local tmp file
+	if heartbeat.IsRemote() {
+		return nil
+	}
+
 	entity := heartbeat.Entity
 	if heartbeat.LocalFile != "" {
 		entity = heartbeat.LocalFile
@@ -123,9 +128,8 @@ func filterFileEntity(heartbeat heartbeat.Heartbeat, config Config) error {
 		return fmt.Errorf(fmt.Sprintf("skipping because of non-existing file %q", entity))
 	}
 
-	// when including only with project file, skip files when the project does not contain a .wakatime-project file
-	// except when file was downloaded to a tmp local file
-	if config.IncludeOnlyWithProjectFile && heartbeat.LocalFile == "" {
+	// when including only with project file, skip files when the project doesn't have a .wakatime-project file
+	if config.IncludeOnlyWithProjectFile {
 		_, ok := project.FindFileOrDirectory(entity, project.WakaTimeProjectFile)
 		if !ok {
 			return fmt.Errorf("skipping because missing .wakatime-project file in parent path")

@@ -209,16 +209,14 @@ func buildHeartbeats(params paramscmd.Params) []heartbeat.Heartbeat {
 
 func initHandleOptions(params paramscmd.Params) []heartbeat.HandleOption {
 	return []heartbeat.HandleOption{
-		heartbeat.WithFormatting(heartbeat.FormatConfig{
-			RemoteAddressPattern: remote.RemoteAddressRegex,
-		}),
+		heartbeat.WithFormatting(),
 		heartbeat.WithEntityModifer(),
-		remote.WithDetection(),
 		filter.WithFiltering(filter.Config{
 			Exclude:                    params.Heartbeat.Filter.Exclude,
 			Include:                    params.Heartbeat.Filter.Include,
 			IncludeOnlyWithProjectFile: params.Heartbeat.Filter.IncludeOnlyWithProjectFile,
 		}),
+		remote.WithDetection(),
 		apikey.WithReplacing(apikey.Config{
 			DefaultApiKey: params.API.Key,
 			MapPatterns:   params.API.KeyPatterns,
@@ -241,8 +239,9 @@ func initHandleOptions(params paramscmd.Params) []heartbeat.HandleOption {
 			FilePatterns:         params.Heartbeat.Sanitize.HideFileNames,
 			HideProjectFolder:    params.Heartbeat.Sanitize.HideProjectFolder,
 			ProjectPatterns:      params.Heartbeat.Sanitize.HideProjectNames,
-			RemoteAddressPattern: remote.RemoteAddressRegex,
+			RemoteAddressPattern: heartbeat.RemoteAddressRegex,
 		}),
+		remote.WithCleanup(),
 		filter.WithLengthValidator(),
 	}
 }

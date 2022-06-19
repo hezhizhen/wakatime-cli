@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -23,9 +22,6 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
-
-// RemoteAddressRegex is a pattern for (ssh|sftp)://user:pass@host:port.
-var RemoteAddressRegex = regexp.MustCompile(`(?i)^((ssh|sftp)://)+(?P<credentials>[^:@]+(:([^:@])+)?@)?[^:]+(:\d+)?`)
 
 const (
 	defaultTimeoutSecs = 20
@@ -54,20 +50,14 @@ func WithDetection() heartbeat.HandleOption {
 			log.Debugln("execute remote file detection")
 
 			var (
-				tmpDir string
-				err    error
+				tmpDir   string
+				err      error
+				filtered []heartbeat.Heartbeat
 			)
 
-			for i, h := range hh {
-				if h.EntityType != heartbeat.FileType {
-					continue
-				}
-
-				if h.IsUnsavedEntity {
-					continue
-				}
-
-				if !RemoteAddressRegex.MatchString(h.Entity) {
+			for _, h := range hh {
+				if !h.IsRemote() {
+					filtered = append(filtered, h)
 					continue
 				}
 
@@ -91,6 +81,8 @@ func WithDetection() heartbeat.HandleOption {
 				if err != nil {
 					log.Errorf("failed to create new remote client: %s", err)
 
+					os.Remove(tmpFile.Name())
+
 					continue
 				}
 
@@ -98,12 +90,39 @@ func WithDetection() heartbeat.HandleOption {
 				if err != nil {
 					log.Errorf("failed to download file to temporary folder: %s", err)
 
+					os.Remove(tmpFile.Name())
+
 					continue
 				}
 
-				hh[i].LocalFile = tmpFile.Name()
-				// we save untouched entity for offline handling
-				hh[i].EntityRaw = h.Entity
+				h.LocalFile = tmpFile.Name()
+				h.LocalFileTemporary = true
+				h.EntityRaw = h.Entity // save untouched entity for offline handling
+
+				filtered = append(filtered, h)
+			}
+
+			if len(filtered) == 0 {
+				log.Debugln("no heartbeats left after remote detection. abort heartbeat handling.")
+				return []heartbeat.Result{}, nil
+			}
+
+			return next(filtered)
+		}
+	}
+}
+
+// WithCleanup initializes and returns a heartbeat handle option, which
+// deletes a local temporary file if downloaded from a remote file.
+func WithCleanup() heartbeat.HandleOption {
+	return func(next heartbeat.Handle) heartbeat.Handle {
+		return func(hh []heartbeat.Heartbeat) ([]heartbeat.Result, error) {
+			log.Debugln("execute remote cleanup")
+
+			for _, h := range hh {
+				if h.LocalFileTemporary {
+					os.Remove(h.LocalFile)
+				}
 			}
 
 			return next(hh)

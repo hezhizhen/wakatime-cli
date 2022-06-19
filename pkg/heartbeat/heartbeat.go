@@ -3,6 +3,7 @@ package heartbeat
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -30,6 +31,7 @@ type Heartbeat struct {
 	LineNumber          *int       `json:"lineno"`
 	Lines               *int       `json:"lines"`
 	LocalFile           string     `json:"-"`
+	LocalFileTemporary  bool       `json:"-"`
 	Project             *string    `json:"project"`
 	ProjectAlternate    string     `json:"-"`
 	ProjectOverride     string     `json:"-"`
@@ -107,6 +109,22 @@ func (h Heartbeat) ID() string {
 		h.Entity,
 		isWrite,
 	)
+}
+
+// RemoteAddressRegex is a pattern for (ssh|sftp)://user:pass@host:port.
+var RemoteAddressRegex = regexp.MustCompile(`(?i)^((ssh|sftp)://)+(?P<credentials>[^:@]+(:([^:@])+)?@)?[^:]+(:\d+)?`)
+
+// IsRemote returns true when entity is a remote file.
+func (h Heartbeat) IsRemote() bool {
+	if h.EntityType != FileType {
+		return false
+	}
+
+	if h.IsUnsavedEntity {
+		return false
+	}
+
+	return RemoteAddressRegex.MatchString(h.Entity)
 }
 
 // Result represents a response from the wakatime api.

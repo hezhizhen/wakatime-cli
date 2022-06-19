@@ -2,6 +2,7 @@ package project
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/wakatime/wakatime-cli/pkg/heartbeat"
 	"github.com/wakatime/wakatime-cli/pkg/log"
@@ -27,6 +28,10 @@ func WithFiltering(config FilterConfig) heartbeat.HandleOption {
 				err := Filter(h, config)
 				if err != nil {
 					log.Debugln(err.Error())
+
+					if h.LocalFileTemporary {
+						os.Remove(h.LocalFile)
+					}
 
 					continue
 				}
