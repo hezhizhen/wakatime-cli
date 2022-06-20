@@ -395,7 +395,7 @@ func TestWithCleanup(t *testing.T) {
 	assert.False(t, fileExists(tmpFile.Name()))
 }
 
-func TestWithCleanup_not_temporary(t *testing.T) {
+func TestWithCleanup_NotTemporary(t *testing.T) {
 	tmpFile, err := os.CreateTemp(t.TempDir(), "")
 	require.NoError(t, err)
 
