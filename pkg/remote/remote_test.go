@@ -286,7 +286,7 @@ func TestWithDetection_sshConfig_UserKnownHostsFile_match(t *testing.T) {
 	assert.Len(t, results, 1)
 }
 
-func TestWithDetection_filtered(t *testing.T) {
+func TestWithDetection_Filtered(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping because OS is Windows.")
 	}
