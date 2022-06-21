@@ -13,6 +13,9 @@ import (
 	"github.com/matishsiao/goInfo"
 )
 
+// RemoteAddressRegex is a pattern for (ssh|sftp)://user:pass@host:port.
+var RemoteAddressRegex = regexp.MustCompile(`(?i)^((ssh|sftp)://)+(?P<credentials>[^:@]+(:([^:@])+)?@)?[^:]+(:\d+)?`)
+
 // Heartbeat is a structure representing activity for a user on a some entity.
 type Heartbeat struct {
 	ApiKey              string     `json:"-"`
@@ -110,9 +113,6 @@ func (h Heartbeat) ID() string {
 		isWrite,
 	)
 }
-
-// RemoteAddressRegex is a pattern for (ssh|sftp)://user:pass@host:port.
-var RemoteAddressRegex = regexp.MustCompile(`(?i)^((ssh|sftp)://)+(?P<credentials>[^:@]+(:([^:@])+)?@)?[^:]+(:\d+)?`)
 
 // IsRemote returns true when entity is a remote file.
 func (h Heartbeat) IsRemote() bool {

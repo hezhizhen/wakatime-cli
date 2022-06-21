@@ -243,7 +243,7 @@ func TestPluginFromUserAgent(t *testing.T) {
 	}
 }
 
-func TestRegex(t *testing.T) {
+func TestRemoteAddressRegex(t *testing.T) {
 	tests := map[string]struct {
 		RemoteAddress string
 		Expected      bool

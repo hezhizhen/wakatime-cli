@@ -63,7 +63,7 @@ func TestNewClient_Err(t *testing.T) {
 		`failed to parse remote file url: parse "ssh://wakatime:1234@192.168.1.2:port": invalid port ":port" after host`)
 }
 
-func TestWithDetection_sshConfig_Hostname(t *testing.T) {
+func TestWithDetectionAndFiltering_sshConfig_Hostname(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping because OS is Windows.")
 	}
@@ -117,7 +117,7 @@ func TestWithDetection_sshConfig_Hostname(t *testing.T) {
 	}
 
 	opts := []heartbeat.HandleOption{
-		remote.WithDetection(),
+		remote.WithDetectionAndFiltering(),
 		remote.WithCleanup(),
 	}
 
@@ -134,7 +134,7 @@ func TestWithDetection_sshConfig_Hostname(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestWithDetection_sshConfig_UserKnownHostsFile_mismatch(t *testing.T) {
+func TestWithDetectionAndFiltering_sshConfig_UserKnownHostsFile_mismatch(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping because OS is Windows.")
 	}
@@ -182,7 +182,7 @@ func TestWithDetection_sshConfig_UserKnownHostsFile_mismatch(t *testing.T) {
 		filter.WithFiltering(filter.Config{
 			IncludeOnlyWithProjectFile: true,
 		}),
-		remote.WithDetection(),
+		remote.WithDetectionAndFiltering(),
 		remote.WithCleanup(),
 	}
 
@@ -201,7 +201,7 @@ func TestWithDetection_sshConfig_UserKnownHostsFile_mismatch(t *testing.T) {
 	assert.Contains(t, logs.String(), "ssh: handshake failed: ssh: host key mismatch")
 }
 
-func TestWithDetection_sshConfig_UserKnownHostsFile_match(t *testing.T) {
+func TestWithDetectionAndFiltering_sshConfig_UserKnownHostsFile_match(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping because OS is Windows.")
 	}
@@ -268,7 +268,7 @@ func TestWithDetection_sshConfig_UserKnownHostsFile_match(t *testing.T) {
 			Include:                    nil,
 			IncludeOnlyWithProjectFile: true,
 		}),
-		remote.WithDetection(),
+		remote.WithDetectionAndFiltering(),
 		remote.WithCleanup(),
 	}
 
@@ -286,7 +286,7 @@ func TestWithDetection_sshConfig_UserKnownHostsFile_match(t *testing.T) {
 	assert.Len(t, results, 1)
 }
 
-func TestWithDetection_Filtered(t *testing.T) {
+func TestWithDetectionAndFiltering_Filtered(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping because OS is Windows.")
 	}
@@ -325,13 +325,8 @@ func TestWithDetection_Filtered(t *testing.T) {
 
 	sender := mockSender{
 		SendHeartbeatsFn: func(hh []heartbeat.Heartbeat) ([]heartbeat.Result, error) {
-			assert.Fail(t, "heartbeats should be filtered and not sent")
-			return []heartbeat.Result{
-				{
-					Status:    201,
-					Heartbeat: heartbeat.Heartbeat{},
-				},
-			}, nil
+			assert.Empty(t, hh)
+			return []heartbeat.Result{}, nil
 		},
 	}
 
@@ -341,7 +336,7 @@ func TestWithDetection_Filtered(t *testing.T) {
 			Include:                    nil,
 			IncludeOnlyWithProjectFile: true,
 		}),
-		remote.WithDetection(),
+		remote.WithDetectionAndFiltering(),
 		remote.WithCleanup(),
 	}
 

@@ -44,7 +44,7 @@ type Client struct {
 // WithDetection initializes and returns a heartbeat handle option, which
 // can be used in a heartbeat processing pipeline to detect remote file and
 // download to a temporary directory.
-func WithDetection() heartbeat.HandleOption {
+func WithDetectionAndFiltering() heartbeat.HandleOption {
 	return func(next heartbeat.Handle) heartbeat.Handle {
 		return func(hh []heartbeat.Heartbeat) ([]heartbeat.Result, error) {
 			log.Debugln("execute remote file detection")
@@ -81,7 +81,7 @@ func WithDetection() heartbeat.HandleOption {
 				if err != nil {
 					log.Errorf("failed to create new remote client: %s", err)
 
-					os.Remove(tmpFile.Name())
+					removeWithLogging(tmpFile.Name())
 
 					continue
 				}
@@ -90,7 +90,7 @@ func WithDetection() heartbeat.HandleOption {
 				if err != nil {
 					log.Errorf("failed to download file to temporary folder: %s", err)
 
-					os.Remove(tmpFile.Name())
+					removeWithLogging(tmpFile.Name())
 
 					continue
 				}
@@ -100,11 +100,6 @@ func WithDetection() heartbeat.HandleOption {
 				h.EntityRaw = h.Entity // save untouched entity for offline handling
 
 				filtered = append(filtered, h)
-			}
-
-			if len(filtered) == 0 {
-				log.Debugln("no heartbeats left after remote detection. abort heartbeat handling.")
-				return []heartbeat.Result{}, nil
 			}
 
 			return next(filtered)
@@ -121,13 +116,19 @@ func WithCleanup() heartbeat.HandleOption {
 
 			for _, h := range hh {
 				if h.LocalFileTemporary {
-					os.Remove(h.LocalFile)
+					log.Debugln("cleaning up temporary file: %s", h.LocalFile)
+					removeWithLogging(h.LocalFile)
 				}
 			}
 
 			return next(hh)
 		}
 	}
+}
+
+func removeWithLogging(file string) {
+	err := os.Remove(file)
+	log.Warnf("unable to delete tmp file: %s", err)
 }
 
 // NewClient initializes a new remote client.

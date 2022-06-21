@@ -1,7 +1,6 @@
 package filter_test
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -66,7 +65,7 @@ func TestWithFiltering(t *testing.T) {
 func TestWithLengthValidator(t *testing.T) {
 	opt := filter.WithLengthValidator()
 	h := opt(func(hh []heartbeat.Heartbeat) ([]heartbeat.Result, error) {
-		return []heartbeat.Result{}, errors.New("this will should never be called")
+		return []heartbeat.Result{}, nil
 	})
 
 	result, err := h([]heartbeat.Heartbeat{})
@@ -150,7 +149,7 @@ func TestFilter_ErrNonExistingFile(t *testing.T) {
 
 	err := filter.Filter(h, filter.Config{})
 
-	assert.EqualError(t, err, "filter file: skipping because of non-existing file \"/tmp/main.go\"")
+	assert.EqualError(t, err, "skipping because of non-existing file \"/tmp/main.go\"")
 }
 
 func TestFilter_ExistingProjectFile(t *testing.T) {
@@ -197,7 +196,7 @@ func TestFilter_ErrNonExistingProjectFile(t *testing.T) {
 		IncludeOnlyWithProjectFile: true,
 	})
 
-	assert.EqualError(t, err, "filter file: skipping because missing .wakatime-project file in parent path")
+	assert.EqualError(t, err, "skipping because missing .wakatime-project file in parent path")
 }
 
 func testHeartbeat() heartbeat.Heartbeat {

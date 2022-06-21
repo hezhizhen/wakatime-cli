@@ -216,7 +216,7 @@ func initHandleOptions(params paramscmd.Params) []heartbeat.HandleOption {
 			Include:                    params.Heartbeat.Filter.Include,
 			IncludeOnlyWithProjectFile: params.Heartbeat.Filter.IncludeOnlyWithProjectFile,
 		}),
-		remote.WithDetection(),
+		remote.WithDetectionAndFiltering(),
 		apikey.WithReplacing(apikey.Config{
 			DefaultApiKey: params.API.Key,
 			MapPatterns:   params.API.KeyPatterns,
